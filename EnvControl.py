@@ -9,16 +9,22 @@ DHT22 (GPIO4)
 #import Adafruit_DHT as dht    # imports Adafruit lib for DHT22
 import time                   # imports time lib
 #import RPi.GPIO as GPIO       # imports GPIO lib
-import threading
+from PyQt5.QtCore import (QCoreApplication, QObject, QRunnable, QThread,
+                          QThreadPool, pyqtSignal)
 from apscheduler.schedulers.blocking import BlockingScheduler
 
-class EnvHandler():
+class EnvHandler(QThread):
+    finished = pyqtSignal()
     def __init__(self, observer):
+        super().__init__()
         self.observer = observer
         self.humPin = 17 # humidifiers gpio pin is 17
         self.exhPin = 18 # exhaust fans gpio pin is 18
         self.heatPin = 27 # heating pads gpio pin is 27
         self.hourlyFanOn = False
+
+    def run(self):
+        self.adjustEnvironment()
 
  #       GPIO.setwarnings(False)
   #      GPIO.setmode(GPIO.BCM)
@@ -65,7 +71,6 @@ class EnvHandler():
                         statusDict["fanState"]="ON"
                         #print "exhaust fan -on"
                         #GPIO.output(self.exhPin,GPIO.HIGH)   # exhaust fan on
-                        time.sleep(5)
                     else:
                         statusDict["fanState"] = "OFF"
                         #print "exhaust fan -off"
@@ -81,7 +86,7 @@ class EnvHandler():
             pass  			# Go to next line
 
     def updateObserver(self, statusDict):
-        self.observer.update(statusDict)
+        self.observer.updateStat(statusDict)
 
     def shutdown(self):
         self.scheduler.shutdown(wait=False)
