@@ -1,12 +1,12 @@
-import sys
+
 import sys
 import datetime
-import threading
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtCore import (QCoreApplication, QObject, QRunnable, QThread,
                           QThreadPool, pyqtSignal)
 from BonsaiGUI import Ui_MainWindow
 from EnvControl import EnvHandler
+from apscheduler.schedulers.blocking import BlockingScheduler
 
 
 class AppWindow(QMainWindow):
@@ -17,13 +17,26 @@ class AppWindow(QMainWindow):
         self.ui.setupUi(self)
         self.show()
         self.envCon = None
-        #self.envCon.statusCheckerThread = threading.Thread(target=self.envCon.adjustEnvironment()).start()
+        self.scheduled = 0
+
+    # Add the environment that the GUI is getting the information from.
     def addEnv(self, env):
         self.envCon = env
 
+
+    def scheduledMessage(self):
+        if self.lastDict == None:
+            return
+        message = ("temperature is ", + self.lastDict["temperatureState"] +
+                   ", humidity is " + self.lastDict["humidityState"] +
+                   ", fan is " + self.lastDict["fanState"] +
+                   ", heating pad is " + self.lastDict["heatState"] +
+                   ", humidifier is " + self.lastDict["humidifierState"])
+        self.addMessages(message)
+
     def addMessages(self, message):
         now = datetime.datetime.now()
-        updatedMessage = str(now.hour) + ":" + str(now.minute) + " - " + message
+        updatedMessage = "{:d}:{:02d}".format(now.hour, now.minute) + " - " + message
         self.ui.displayMessage.append("\n" + updatedMessage)
         self.show()
 
