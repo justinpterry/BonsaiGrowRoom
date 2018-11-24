@@ -7,14 +7,21 @@
 import GUI
 import EnvControl
 import datetime
+import threading
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 class Bonsai():
     def __init__(self):
-        self.gui = GUI.GUI()
-        self.envCon = EnvControl.EnvHandler(self)
         self.lastDict = None
-        self.scheduledUpdates()
+        self.envCon = EnvControl.EnvHandler(self)
+        self.gui = GUI.GUI(self)
+
+      #  self.envCon.exhaustThread = threading.Thread(target=self.envCon.exhaustSchedule()).start()
+
+        self.gui.UIThread = threading.Thread(target=self.gui.create()).start()
+        self.envCon.statusCheckerThread = threading.Thread(target=self.envCon.adjustEnvironment()).start()
+
+     #   self.scheduledUpdates()
         
     def scheduledUpdates(self):
         self.scheduler = BlockingScheduler()

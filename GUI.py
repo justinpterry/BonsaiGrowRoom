@@ -1,4 +1,6 @@
 from tkinter import *
+import threading
+import Bonsai
 #from EnvControl import *
 
 ''' GUI is the user interface for the environment control.
@@ -7,6 +9,7 @@ from tkinter import *
 '''
 
 class GUI(object):
+    bonsai = Bonsai()
   #  envCon = EnvHandler()
 
     def __init__(self, controller):
@@ -20,7 +23,7 @@ class GUI(object):
         self.fanStatus = None
         self.heatStatus = None
         self.humStatus = None
-        self.create()
+
 
     # adds a message to the textbox.
     def addMessage(self, message):
@@ -29,14 +32,15 @@ class GUI(object):
         self.displayMessage.configure(state=DISABLED)
 
     def updateStatus(self, statusDict):
-        self.tempDisplay.configure(text="temp:" + statusDict['temperatureState'])
-        self.humDisplay.configure(text="humidity:" + statusDict['humidityState'])
-        self.fanStatus.configure(text="FAN:" + statusDict['fanState'])
-        self.heatStatus.configure(text="HEAT:" + statusDict['heatState'])
-        self.humStatus.configure(text="HUMIDIFIER:" + statusDict['humidifierState'])
+        self.tempDisplay['text']="temp:" + statusDict['temperatureState']
+        self.humDisplay['text']="humidity:" + statusDict['humidityState']
+        self.fanStatus['text']="FAN:" + statusDict['fanState']
+        self.heatStatus['text']="HEAT:" + statusDict['heatState']
+        self.humStatus['text']="HUMIDIFIER:" + statusDict['humidifierState']
     def on_closing(self,window):
         self.observer.shutdown()
         window.destroy()
+
 
     def create(self):
         #creates main window
@@ -81,6 +85,5 @@ class GUI(object):
         scrollb.grid(row=0,column=1, sticky='nsew')
         self.displayMessage['yscrollcommand'] = scrollb.set
 
-        window.protocol("WM_DELETE_WINDOW", self.on_closing(window))
+       # window.protocol("WM_DELETE_WINDOW", self.on_closing(window))
         window.mainloop()
-GUI()
