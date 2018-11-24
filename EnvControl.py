@@ -6,12 +6,12 @@
 DHT22 (GPIO4)
 """
 
-#import Adafruit_DHT as dht    # imports Adafruit lib for DHT22
+import Adafruit_DHT as dht    # imports Adafruit lib for DHT22
 import sched, time                   # imports time lib
 import threading
-#import RPi.GPIO as GPIO       # imports GPIO lib
+import RPi.GPIO as GPIO       # imports GPIO lib
 from PyQt5.QtCore import (QThread, pyqtSignal)
-#from apscheduler.schedulers.blocking import BlockingScheduler
+
 
 class EnvHandler(QThread):
     finished = pyqtSignal()
@@ -29,12 +29,11 @@ class EnvHandler(QThread):
         #self.exhaustThread = threading.Thread(self.exhaustSchedule()).start()
         self.adjustEnvironment()
 
- #       GPIO.setwarnings(False)
-  #      GPIO.setmode(GPIO.BCM)
-   #    GPIO.setup(self.exhPin,GPIO.OUT)    # exhaust fan
-    #    GPIO.setup(self.heatPin,GPIO.OUT)    # heating pad
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.exhPin,GPIO.OUT)    # exhaust fan
+        GPIO.setup(self.heatPin,GPIO.OUT)    # heating pad
 
-       # self.exhaustThread = threading.Thread(target=self.exhaustSchedule).start()
 
 
 
@@ -48,36 +47,37 @@ class EnvHandler(QThread):
         }
         try:
             while 1:                # Loop will run forever
-                humi = 20.00
-                temp = 40.00#dht.read_retry(dht.DHT22, 4)  # Reading humidity and temperature
+                # humi = 20.00
+                #temp = 40.00
+                humi, temp = dht.read_retry(dht.DHT22, 4)  # Reading humidity and temperature
                 statusDict['temperatureState']= '{0:0.1f}*C'.format(float(temp))
-                statusDict['humidityState']= '{0:0.1f}%'.format(float(temp))
+                statusDict['humidityState']= '{0:0.1f}%'.format(float(humi))
                 #print 'Temp: {0:0.1f}*C  Humidity: {1:0.1f}%'.format(float(temp),float(humi))
                 if humi < 70:    # HUMIDITY LOW LIMIT
                     statusDict["humidifierState"]="ON"
                     #print "humidifier  -on"
-     #               GPIO.output(self.humPin,GPIO.HIGH)   # humidifier on
+                    GPIO.output(self.humPin,GPIO.HIGH)   # humidifier on
                 else:
                     statusDict["humidifierState"] = "OFF"
                     #print "humidifier -off"
-                    #GPIO.output(self.humPin,GPIO.LOW)    # humidifier off
+                    GPIO.output(self.humPin,GPIO.LOW)    # humidifier off
                 if temp < 24:   # TEMPERATURE LOW LIMIT HEATING PAD (75f)
                     statusDict["heatState"] = "ON"
                     #print "heating pad -on"
-                   # GPIO.output(self.heatPin,GPIO.HIGH)   # heating pad ON
+                    GPIO.output(self.heatPin,GPIO.HIGH)   # heating pad ON
                 else:
                     statusDict["heatState"] = "OFF"
                     #print "heating pad -off"
-                   # GPIO.output(self.heatPin,GPIO.LOW)# heating pad off
+                    GPIO.output(self.heatPin,GPIO.LOW)# heating pad off
                 if not self.hourlyFanOn:
                     if temp > 30:   # TEMPERATURE HIGH LIMIT EXHAUST FAN (85f)
                         statusDict["fanState"]="ON"
                         #print "exhaust fan -on"
-                        #GPIO.output(self.exhPin,GPIO.HIGH)   # exhaust fan on
+                        GPIO.output(self.exhPin,GPIO.HIGH)   # exhaust fan on
                     else:
                         statusDict["fanState"] = "OFF"
                         #print "exhaust fan -off"
-                        #GPIO.output(self.exhPin,GPIO.LOW)    # exhaust fan OFF
+                        GPIO.output(self.exhPin,GPIO.LOW)    # exhaust fan OFF
                 else:
                     statusDict["fanState"] = "ON"
                 self.updateObserver(statusDict)
@@ -92,18 +92,14 @@ class EnvHandler(QThread):
         self.observer.updateStat(statusDict)
 
     def shutdown(self):
-        self.scheduler.shutdown(wait=False)
-        self.exhaustThread.exit()
+        #self.scheduler.shutdown(wait=False)
+        #self.exhaustThread.exit()
         return
     # ExhaustSchedule creates a scheduler for the exhaust fan, then adds the job for it to vent the fan every hour
     def exhaustSchedule(self):
         #self.scheduler = BlockingScheduler()
         #self.scheduler.add_job(self.hourlyExhaust, 'interval', hours=1)
        # self.scheduler.start()
-        return
-        s = sched.scheduler(time.time, time.sleep)
-        s.enter(self.schedDelay, 0, self.hourlyExhaust())
-        s.run()
         return
     # hourlyExhaust is the job that happens every hour. It sets hourlyFanOn to true, so that the main while-loop
     # can't turn the fan off, then turns the fan on for ten seconds, then relinquishes control of the fan back
